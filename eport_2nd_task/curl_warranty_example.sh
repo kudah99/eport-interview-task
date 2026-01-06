@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Example curl command to POST a warranty with API key
-# Replace <YOUR_API_KEY> with your actual API key
+# Example curl command to POST a warranty
 # Replace <BASE_URL> with your server URL (e.g., http://localhost:8000 or https://server15.eport.ws)
 
 curl -X POST "<BASE_URL>/api/v1/warranty" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: <YOUR_API_KEY>" \
   -d '{
     "asset_name": "Laptop Dell XPS 15",
     "category": "Computer",
@@ -24,7 +22,6 @@ curl -X POST "<BASE_URL>/api/v1/warranty" \
 # Example with minimal required fields only:
 # curl -X POST "<BASE_URL>/api/v1/warranty" \
 #   -H "Content-Type: application/json" \
-#   -H "X-API-Key: <YOUR_API_KEY>" \
 #   -d '{
 #     "asset_name": "Monitor Samsung 27inch",
 #     "category": "Display",

@@ -69,23 +69,14 @@ export async function POST(request: Request) {
       notes: notes || "",
     };
 
-    // Get API key and URL from environment
-    const apiKey = process.env.WARRANTY_API_KEY;
+    // Get URL from environment
     const warrantyApiUrl = process.env.WARRANTY_API_URL || "https://server15.eport.ws/api/v1/warranty";
-    
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "Warranty API key not configured" },
-        { status: 500 }
-      );
-    }
 
     // Call the external warranty API
     const warrantyResponse = await fetch(warrantyApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": apiKey,
       },
       body: JSON.stringify(warrantyData),
     });

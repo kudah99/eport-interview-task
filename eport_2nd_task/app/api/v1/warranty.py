@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends, Query
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED
 
-from app.api.dependencies.api_key import verify_api_key
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.service import get_service
 from app.database.repositories.warranty import WarrantyRepository
-from app.models.api_key import ApiKey
 from app.schemas.warranty import (
     WarrantyInCreate,
     WarrantyResponse,
@@ -55,7 +53,6 @@ router = APIRouter()
 )
 async def register_warranty(
     *,
-    api_key: ApiKey = Depends(verify_api_key),
     warranty_service: WarrantyService = Depends(get_service(WarrantyService)),
     warranty_repo: WarrantyRepository = Depends(get_repository(WarrantyRepository)),
     warranty_in: WarrantyInCreate,
