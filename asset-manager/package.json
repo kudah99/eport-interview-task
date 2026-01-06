@@ -3,7 +3,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 5000",
     "lint": "eslint .",
     "create-admin": "tsx scripts/create-admin.ts",
     "setup-database": "tsx scripts/setup-database.ts",
