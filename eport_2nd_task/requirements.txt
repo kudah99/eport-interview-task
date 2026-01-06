@@ -8,7 +8,9 @@ python-multipart>=0.0.9
 requests>=2.31.0
 python-dotenv>=1.0.1
 loguru>=0.7.2
-psycopg2>=2.9.9
+# keep this
+psycopg2-binary>=2.9.9
+# remove or
 hypercorn>=0.16.0
 asgi-correlation-id>=4.3.1
 asyncpg>=0.29.0
