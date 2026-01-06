@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  basePath: '/docker/asset',
+  assetPrefix: '/docker/asset/',
   cacheComponents: true,
   output: 'standalone',
   // Suppress hanging promise warnings for cookies() in Supabase client

@@ -91,4 +91,3 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
