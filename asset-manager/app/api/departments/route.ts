@@ -1,0 +1,37 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const { data: authData } = await supabase.auth.getClaims();
+
+    // Check if user is authenticated
+    if (!authData?.claims) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Fetch departments
+    const { data, error } = await supabase
+      .from("departments")
+      .select("id, name")
+      .order("name", { ascending: true });
+
+    if (error) {
+      // If table doesn't exist, return empty array
+      if (error.code === "42P01") {
+        return NextResponse.json({ departments: [] });
+      }
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ departments: data || [] });
+  } catch (error) {
+    console.error("Error fetching departments:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "An error occurred" },
+      { status: 500 }
+    );
+  }
+}
+

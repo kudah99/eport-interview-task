@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - API Key Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#e0f5f3',
+                            100: '#b3e6df',
+                            200: '#80d7ca',
+                            300: '#4dc8b5',
+                            400: '#26b9a0',
+                            500: '#119c8c',
+                            600: '#0f7d70',
+                            700: '#0d5e54',
+                            800: '#0b3f38',
+                            900: '#09201c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Login Modal (shown by default) -->
+    <div id="login-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Admin Login</h3>
+                </div>
+                <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                    <div>
+                        <label for="admin-email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="admin-email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border" placeholder="admin@warranty-centre.co.zw" value="admin@warranty-centre.co.zw">
+                    </div>
+                    <div>
+                        <label for="admin-password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="admin-password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border" placeholder="Enter password">
+                    </div>
+                    <div id="login-error" class="hidden bg-red-50 border border-red-200 rounded-md p-3">
+                        <p class="text-sm text-red-800" id="login-error-message"></p>
+                    </div>
+                    <div class="flex items-center justify-end">
+                        <button type="submit" class="w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Admin Content (hidden until authenticated) -->
+    <div id="admin-content" class="hidden">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-primary-600 p-2 rounded-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Admin Panel</h1>
+                            <p class="text-sm text-gray-500">API Key Management</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="logout()" class="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Create API Key Section -->
+            <div class="bg-white rounded-lg shadow mb-6 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Create New API Key</h2>
+                <form onsubmit="handleCreateApiKey(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label for="key-name" class="block text-sm font-medium text-gray-700 mb-2">Key Name</label>
+                            <input type="text" id="key-name" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border" placeholder="e.g., Production Server, Mobile App">
+                        </div>
+                        <div>
+                            <label for="expires-days" class="block text-sm font-medium text-gray-700 mb-2">Expires In (Days)</label>
+                            <input type="number" id="expires-days" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border" placeholder="Leave empty for no expiry">
+                        </div>
+                    </div>
+                    <div id="create-error" class="hidden bg-red-50 border border-red-200 rounded-md p-3">
+                        <p class="text-sm text-red-800" id="create-error-message"></p>
+                    </div>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Create API Key
+                    </button>
+                </form>
+            </div>
+
+            <!-- Newly Created Key Display (shown once) -->
+            <div id="new-key-display" class="hidden bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-lg font-medium text-green-800">API Key Created Successfully!</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-green-700 mb-2">IMPORTANT: Save this API key now. It will not be shown again!</p>
+                            <div class="bg-white rounded-md p-3 border border-green-300">
+                                <p class="text-xs font-medium text-gray-500 mb-1">API Key:</p>
+                                <p id="new-api-key-value" class="text-sm font-mono text-gray-900 break-all"></p>
+                            </div>
+                            <button onclick="copyApiKey()" class="mt-2 text-sm text-primary-600 hover:text-primary-700 font-medium">
+                                Copy to Clipboard
+                            </button>
+                        </div>
+                    </div>
+                    <button onclick="closeNewKeyDisplay()" class="ml-4 text-green-400 hover:text-green-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white rounded-lg shadow mb-6 p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="show-inactive" onchange="loadApiKeys()" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="ml-2 text-sm text-gray-700">Show inactive keys</span>
+                        </label>
+                    </div>
+                    <button onclick="loadApiKeys()" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                <p class="mt-4 text-gray-500">Loading API keys...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Error loading API keys</h3>
+                        <p class="mt-2 text-sm text-red-700" id="error-message"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Keys Table -->
+            <div id="keys-container" class="hidden bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Used</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="keys-tbody" class="bg-white divide-y divide-gray-200">
+                            <!-- Data will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="empty-state" class="hidden text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No API keys found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Create your first API key to get started.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let isAuthenticated = false;
+        let newApiKeyValue = null;
+
+        // Check authentication on page load
+        function checkAuth() {
+            const authStatus = sessionStorage.getItem('admin_authenticated');
+            if (authStatus === 'true') {
+                isAuthenticated = true;
+                showAdminContent();
+                loadApiKeys();
+            } else {
+                showLoginModal();
+            }
+        }
+
+        // Show login modal
+        function showLoginModal() {
+            document.getElementById('login-modal').classList.remove('hidden');
+            document.getElementById('admin-content').classList.add('hidden');
+        }
+
+        // Show admin content
+        function showAdminContent() {
+            document.getElementById('login-modal').classList.add('hidden');
+            document.getElementById('admin-content').classList.remove('hidden');
+        }
+
+        // Handle admin login
+        async function handleAdminLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            const errorDiv = document.getElementById('login-error');
+            const errorMessage = document.getElementById('login-error-message');
+
+            try {
+                const response = await fetch('/api/v1/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({ email, password }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    isAuthenticated = true;
+                    sessionStorage.setItem('admin_authenticated', 'true');
+                    showAdminContent();
+                    loadApiKeys();
+                } else {
+                    errorMessage.textContent = result.detail || 'Invalid credentials';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMessage.textContent = 'An error occurred during login. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // Logout
+        function logout() {
+            sessionStorage.removeItem('admin_authenticated');
+            isAuthenticated = false;
+            showLoginModal();
+        }
+
+        // Load API keys
+        async function loadApiKeys() {
+            try {
+                document.getElementById('loading').classList.remove('hidden');
+                document.getElementById('error').classList.add('hidden');
+                document.getElementById('keys-container').classList.add('hidden');
+
+                const includeInactive = document.getElementById('show-inactive').checked;
+                const response = await fetch(`/api/v1/admin/api-keys?include_inactive=${includeInactive}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.data && Array.isArray(result.data)) {
+                    displayApiKeys(result.data);
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            } catch (error) {
+                console.error('Error loading API keys:', error);
+                document.getElementById('error-message').textContent = error.message || 'Failed to load API keys. Please try again.';
+                document.getElementById('error').classList.remove('hidden');
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        // Display API keys
+        function displayApiKeys(keys) {
+            const tbody = document.getElementById('keys-tbody');
+            const emptyState = document.getElementById('empty-state');
+
+            if (keys.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                document.getElementById('keys-container').classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            tbody.innerHTML = keys.map(key => {
+                const createdDate = new Date(key.created_at).toLocaleDateString();
+                const lastUsed = key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Never';
+                const expires = key.expires_at ? new Date(key.expires_at).toLocaleDateString() : 'Never';
+                
+                const statusColor = key.is_active 
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800';
+                
+                const statusText = key.is_active ? 'Active' : 'Inactive';
+                const actionButton = key.is_active 
+                    ? `<button onclick="deactivateKey(${key.id})" class="text-red-600 hover:text-red-900 font-medium text-sm">Deactivate</button>`
+                    : `<button onclick="activateKey(${key.id})" class="text-green-600 hover:text-green-900 font-medium text-sm">Activate</button>`;
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${key.id}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(key.name)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${createdDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lastUsed}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${expires}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            ${actionButton}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('keys-container').classList.remove('hidden');
+        }
+
+        // Create API key
+        async function handleCreateApiKey(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('key-name').value;
+            const expiresDays = document.getElementById('expires-days').value;
+            const errorDiv = document.getElementById('create-error');
+            const errorMessage = document.getElementById('create-error-message');
+
+            try {
+                const body = { name };
+                if (expiresDays) {
+                    body.expires_days = parseInt(expiresDays);
+                }
+
+                const response = await fetch('/api/v1/admin/api-keys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(body),
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.api_key) {
+                    // Show the new API key
+                    newApiKeyValue = result.api_key;
+                    document.getElementById('new-api-key-value').textContent = result.api_key;
+                    document.getElementById('new-key-display').classList.remove('hidden');
+                    
+                    // Reset form
+                    document.getElementById('key-name').value = '';
+                    document.getElementById('expires-days').value = '';
+                    errorDiv.classList.add('hidden');
+                    
+                    // Reload keys list
+                    loadApiKeys();
+                } else {
+                    errorMessage.textContent = result.detail || 'Failed to create API key';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error creating API key:', error);
+                errorMessage.textContent = 'An error occurred. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // Deactivate API key
+        async function deactivateKey(keyId) {
+            if (!confirm('Are you sure you want to deactivate this API key?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/admin/api-keys/${keyId}/deactivate`, {
+                    method: 'POST',
+                });
+
+                if (response.ok) {
+                    loadApiKeys();
+                } else {
+                    const result = await response.json();
+                    alert(result.detail || 'Failed to deactivate API key');
+                }
+            } catch (error) {
+                console.error('Error deactivating API key:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        // Activate API key
+        async function activateKey(keyId) {
+            try {
+                const response = await fetch(`/api/v1/admin/api-keys/${keyId}/activate`, {
+                    method: 'POST',
+                });
+
+                if (response.ok) {
+                    loadApiKeys();
+                } else {
+                    const result = await response.json();
+                    alert(result.detail || 'Failed to activate API key');
+                }
+            } catch (error) {
+                console.error('Error activating API key:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        // Copy API key to clipboard
+        function copyApiKey() {
+            if (newApiKeyValue) {
+                navigator.clipboard.writeText(newApiKeyValue).then(() => {
+                    alert('API key copied to clipboard!');
+                }).catch(() => {
+                    alert('Failed to copy. Please copy manually.');
+                });
+            }
+        }
+
+        // Close new key display
+        function closeNewKeyDisplay() {
+            document.getElementById('new-key-display').classList.add('hidden');
+            newApiKeyValue = null;
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize on page load
+        checkAuth();
+    </script>
+</body>
+</html>
+

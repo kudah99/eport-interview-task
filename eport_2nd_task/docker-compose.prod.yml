@@ -1,0 +1,89 @@
+networks:
+  fpb-net:
+    driver: bridge
+
+volumes:
+  postgresql_data: 
+    driver: local
+  certbot-etc:
+  certbot-var:
+
+services:
+  # Nginx
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro"
+      - "./nginx/web-root:/var/www/html"
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+    restart: always
+    networks:
+      - fpb-net
+    depends_on:
+      - app
+
+  # App
+  app:
+    container_name: warranty-registration-app
+    # Build for production
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    # Uncomment below and comment out 'build' above to use pre-built GHCR image
+    # image: ghcr.io/beerjoa/fastapi-postgresql-boilerplate:dev
+    env_file:
+      - ".env"
+    # Production: no volume mounts for app code (uses image)
+    # Uncomment below for development mode with hot reload
+    # volumes:
+    #   - "./app:/data/backend/app"
+    #   - "./tests:/data/backend/tests"
+    #   - "./.env:/data/backend/.env"
+    # ports:
+    #   - "8000:8000"  # Keep for direct access during development
+    # command: python -m uvicorn app.main:app --host 0.0.0.0 --reload --log-level debug
+    restart: always
+    networks:
+      - fpb-net
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  # Database
+  postgresql:
+    container_name: postgresql
+    image: postgres:12.2-alpine
+    env_file:
+      - ".db.env"
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+      - "./postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro"
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    ports:
+      - "5432:5432"
+    restart: always
+    networks:
+      - fpb-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Certbot for Let's Encrypt SSL certificates
+  certbot:
+    container_name: certbot
+    image: certbot/certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - "./nginx/web-root:/var/www/html"
+    depends_on:
+      - nginx
+    command: certonly --webroot --webroot-path=/var/www/html --email kcchipangura@gmail.com --agree-tos --no-eff-email -d server15.eport.ws
