@@ -1,8 +1,8 @@
-\"use client\";
+"use client";
 
-import { useState, useEffect } from \"react\";
-import { Button, Input, Form, Select, DatePicker, InputNumber, Upload } from \"antd\";
-import type { UploadFile } from \"antd/es/upload/interface\";
+import { useState, useEffect } from "react";
+import { Button, Input, Form, Select, DatePicker, InputNumber, Upload } from "antd";
+import type { UploadFile } from "antd/es/upload/interface";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
