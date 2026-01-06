@@ -17,7 +17,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
 
-# Then copy the source
+# Copy env (for Next.js dev) and source code
+# Ensure .env.local exists in the build context
+COPY .env.local ./
 COPY . .
 
 EXPOSE 3000
@@ -32,6 +34,10 @@ CMD ["npm", "run", "dev"]
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy env (for Next.js build-time vars)
+# Ensure .env.local exists in the build context
+COPY .env.local ./
 COPY . .
 
 # Build Next.js app

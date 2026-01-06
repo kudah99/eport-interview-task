@@ -20,4 +20,6 @@ class Warranty(RWModel, DateTimeModelMixin):
     warranty_period_months = Column(Integer, nullable=True)
     warranty_expiry_date = Column(Date, nullable=True)
     notes = Column(Text, nullable=True)
+    # JSON-encoded list of image URLs sent from Asset Manager (up to 4)
+    image_urls = Column(Text, nullable=True)
 

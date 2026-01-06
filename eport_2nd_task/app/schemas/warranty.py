@@ -24,6 +24,8 @@ class WarrantyBase(BaseModel):
     warranty_period_months: int | None = None
     warranty_expiry_date: date | None = None
     notes: str | None = None
+    # Up to 4 image URLs associated with this warranty / asset
+    image_urls: list[str] | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     deleted_at: datetime | None = None
@@ -41,6 +43,7 @@ class WarrantyInCreate(BaseModel):
     warranty_period_months: int | None = None
     warranty_expiry_date: date | None = None
     notes: str | None = None
+    image_urls: list[str] | None = None
 
 
 class WarrantyInUpdate(BaseModel):
@@ -55,6 +58,7 @@ class WarrantyInUpdate(BaseModel):
     warranty_period_months: int | None = None
     warranty_expiry_date: date | None = None
     notes: str | None = None
+    image_urls: list[str] | None = None
 
 
 class WarrantyOutData(WarrantyBase):

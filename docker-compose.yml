@@ -3,37 +3,17 @@ networks:
     driver: bridge
 
 volumes:
-  postgresql_data: 
+  postgresql_data:
     driver: local
 
 services:
-  # Nginx
-  nginx:
-    container_name: nginx
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - "./eport_2nd_task/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro"
-      - "./eport_2nd_task/nginx/web-root:/var/www/html"
-    restart: always
-    networks:
-      - fpb-net
-    depends_on:
-      - app
-      - asset-manager
-
   # FastAPI App
   app:
     container_name: warranty-registration-app
-    # Build locally for development
     build:
       context: ./eport_2nd_task
       dockerfile: Dockerfile
       target: development
-    # Uncomment below and comment out 'build' above to use pre-built GHCR image
-    # image: ghcr.io/beerjoa/fastapi-postgresql-boilerplate:dev
     env_file:
       - "./eport_2nd_task/.env"
     volumes:
@@ -41,7 +21,7 @@ services:
       - "./eport_2nd_task/tests:/data/backend/tests"
       - "./eport_2nd_task/.env:/data/backend/.env"
     ports:
-      - "8000:8000"  # Keep for direct access during development
+      - "8000:8000"  # Keep for direct access
     command: python -m uvicorn app.main:app --host 0.0.0.0 --reload --log-level debug
     restart: always
     networks:

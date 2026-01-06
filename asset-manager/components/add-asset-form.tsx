@@ -1,7 +1,8 @@
-"use client";
+\"use client\";
 
-import { useState, useEffect } from "react";
-import { Button, Input, Form, Select, DatePicker, InputNumber } from "antd";
+import { useState, useEffect } from \"react\";
+import { Button, Input, Form, Select, DatePicker, InputNumber, Upload } from \"antd\";
+import type { UploadFile } from \"antd/es/upload/interface\";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
@@ -21,6 +22,7 @@ export function AddAssetForm({ onSuccess }: { onSuccess?: () => void }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -69,12 +71,24 @@ export function AddAssetForm({ onSuccess }: { onSuccess?: () => void }) {
           : null,
       };
 
+      // Build multipart form data so we can upload images
+      const formData = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
+      });
+
+      // Attach up to 4 image files
+      fileList.slice(0, 4).forEach((file) => {
+        if (file.originFileObj) {
+          formData.append("images", file.originFileObj as File);
+        }
+      });
+
       const response = await fetch("/api/assets", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       const data = await response.json();
@@ -85,6 +99,7 @@ export function AddAssetForm({ onSuccess }: { onSuccess?: () => void }) {
 
       toast.success("Asset created successfully!");
       form.resetFields();
+      setFileList([]);
       if (onSuccess) {
         onSuccess();
       }
@@ -198,6 +213,27 @@ export function AddAssetForm({ onSuccess }: { onSuccess?: () => void }) {
           rows={3}
           placeholder="Optional description for this asset"
         />
+      </Form.Item>
+      <Form.Item label="Asset Images (up to 4)">
+        <Upload
+          listType="picture-card"
+          multiple
+          fileList={fileList}
+          beforeUpload={(file) => {
+            if (fileList.length >= 4) {
+              toast.error("You can only upload up to 4 images per asset");
+              return Upload.LIST_IGNORE;
+            }
+            setFileList((prev) => [...prev, file]);
+            // Prevent auto upload - we'll submit with the form
+            return false;
+          }}
+          onRemove={(file) => {
+            setFileList((prev) => prev.filter((f) => f.uid !== file.uid));
+          }}
+        >
+          {fileList.length >= 4 ? null : <div>Upload</div>}
+        </Upload>
       </Form.Item>
       <Form.Item>
         <Button type="primary" htmlType="submit" loading={isLoading} block>
