@@ -12,7 +12,12 @@ RUN npm ci
 # Development image
 FROM base AS development
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Install deps inside the dev image (no node_modules copy)
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Then copy the source
 COPY . .
 
 EXPOSE 3000
